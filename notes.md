@@ -57,6 +57,7 @@ Short explanations:
         pp.notation : display output using defined notations
         pp.beta : beta reduce terms before displaying them
         pp.numeral: ?
+* let is the term equivalent for tactic rcases.
 
 
 
@@ -101,4 +102,11 @@ https://leanprover-community.github.io/mathlib_docs/data/set/basic.html#set.ext
 Kevin Buzzard links:
 https://github.com/ImperialCollegeLondon/M40001_lean
 https://github.com/ImperialCollegeLondon/group-theory-game
-`
+
+
+Proof tricks
+============
+use 
+-- Assign an expression to see it's type in the live panel.
+let h1 := <some expression>,
+have h1 := <some expression>,

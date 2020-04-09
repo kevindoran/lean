@@ -38,9 +38,8 @@ Contents and exercises for Chapter 9 of Tao's Analysis.
 -- We want real numbers and their basic properties
 import data.real.basic
 import data.set
-import analysis.normed_space.basic
---import algebra.archimedean
---open set
+import logic.basic
+--import finset
 set_option pp.implicit true
 -- Make simp display the steps used.  
 set_option trace.simplify.rewrite true
@@ -75,23 +74,49 @@ constant open_closed_interval : set.Ioc x₁ x₂
 constant closed_interval : set.Icc x₁ x₂
 end demo
 
+/-
+Exercises
+---------
+9.1.1
+9.1.2 (Lemma 9.1.11)
+9.1.3 TODO
+9.1.1 again, this time using Lemma 9.1.11, and Exercise 9.1.6.
+-/
+
 -- Definition 9.1.7
 -- I'm skipping this and going directly to 9.1.8
 
 -- Definition 9.1.8
-@[reducible]
 def is_adherent (x : ℝ) (X : set ℝ) : Prop := 
 ∀ ε > 0, ∃y ∈ X, |x - y| < ε
 
 infix `is_adherent_to` :55 := is_adherent
 
 -- Definition 9.1.10
-@[reducible]
-def closure(X : set ℝ) : set ℝ := 
+def closure (X : set ℝ) : set ℝ := 
 {x : ℝ | x is_adherent_to X }
+
+-- Definition 9.1.15
+def is_closed (X : set ℝ) :Prop :=
+closure X = X
+
+-- Definition 9.1.18 a)
+def is_limit_point (x : ℝ) (X : set ℝ) : Prop :=
+is_adherent x (X \ {x})
+
+def is_isolated_point (x : ℝ) (X : set ℝ) : Prop :=
+x ∈ X ∧ ∃ ε > 0, ∀y ∈ (X \ {x}), |x - y| > ε
+
+-- Definition 9.1.22
+def is_bounded (X : set ℝ) : Prop :=
+∃ M > 0, X ⊆ set.Icc (-M) M
+
 
 /- Exercise 9.1.1
 If X ⊆ Y ⊆ closure(X), then closure(Y) = closure(X)
+
+This attempt is a hacky δ—ε proof; it doesn't use any properties from Lemma 
+9.1.11. I repeat the proof again below using Lemma 9.1.11.
 -/
 lemma closure_squeeze 
   (X Y : set ℝ) 
@@ -104,10 +129,7 @@ begin
     intros x h₃ ε hε,
     have h₄ : x is_adherent_to X, from h₃,
     have h₅ : ∃x' ∈ X, |x - x'| < ε, from h₃ ε hε,
-    apply exists.elim h₅,
-    intros x' h_exists_temp,
-    apply exists.elim h_exists_temp,
-    intros h₆ h₇,
+    rcases h₅ with ⟨x', h₆, h₇⟩,
     have h₈ : x' ∈ Y, from h₁ h₆,
     use x',
     exact and.intro h₈ h₇
@@ -131,82 +153,29 @@ begin
   }
 end
 
+/- Exercise 9.1.2 (Lemma 9.1.11)
 
-    -- There must be a better way to get a δ = ε/3:
-    -- have h₄ : ∃δ : ℝ, δ = ε/3, from exists_eq, 
-    -- apply exists.elim h₄,
-    -- intro δ,
-    -- assume hδ : δ = ε/3,
-
-/-
-          have h₆ : ∃x ∈ X, |y - x| < ε, from exists.elim h₅ (
-            assume (y' : ℝ) (h : (∃hh₁ : (y' ∈ Y), |y - y'| < ε)),
-            exists.elim h (
-              assume (hhh₁ : y' ∈ Y) (hhh₂ : |y - y'| < ε),
-              have hhh₃ : y' ∈ closure(X), from h₂ hhh₁,   
-              have hhh₄ : ∀δ > 0, ∃x' ∈ X, |y' - x'| < δ, from hhh₃, 
-                have h4₂ : ∃x' ∈ X, |y' - x'| < δ, from hhh₄ h4₁,
-              sorry
-              )
-          --have h₇ : y is_adherent_to X, from h₆,
-          --apply h₄, -- why?
-        end)-/
-    /-
-    ext (assume i, iff.intro
-      (assume a: i ∈ closure(X),
-        show i ∈ closure(Y), from 
-            have h2: is_adherent i X, from a,
-            have h3: is_adherent i Y, from adheres_to_superset i Y X h1.left h2,
-            show i ∈ closure(Y), from h3)
-      (assume a: i ∈ closure(Y),
-        show i ∈ closure(X), from 
-            have h2: is_adherent i Y, from a,
-            have h3: is_adherent i X, from 
-              assume ε, 
-              exists.elim (exists_rat_lt (ε/3))
-                (assume (δ : ℝ) (h4: δ < (ε/3)),
-                exists.elim (h2 δ)
-                  (assume (y : ℝ) (h5: |i - y| < δ),
-                  
-                  ) 
-              --exists.intro y (|i - y| < ε),
-
-              )
-            show i ∈ closure(X), from h3)
-      )
-    )
-    -/
-    --have h1 : closure(X) ⊆ closure(Y), from sorry
-    --have h2 : closure(Y) ⊆ closure(X), from sorry
-    --show closure(X) = closure(Y), from sorry
-
---print notation `[` a `,` b `]` := {i ∈ ℝ | a ≤ i ≤ b}
---print notation `(` a `,` b `)` := {i ∈ ℝ | a ≤ i ≤ b}
---print notation `[` a `,` b `]` := {i ∈ ℝ | a ≤ i ≤ b}
---print notation `[` a `,` b `]` := {i ∈ ℝ | a ≤ i ≤ b}
-
-/- Lemma 9.1.11
 There are 4 separate propositions here:
 
   1. X ⊆ closure(X)
+  The 4th part is done next so that it can be used in 2 and 3.
+  4. X ⊆ Y → closure(X) ⊆ closure(Y)  
   2. closure(X ∪ Y) = closure(X) ∪ closure(Y)
   3. closure(X ∩ Y) ⊆ closure(X) ∩ closure(Y)
-  4. X ⊆ Y → closure(X) ⊆ closure(Y)
 -/ 
 
 -- 1. X ⊆ closure(X)
-lemma closure_eq_of_is_closed (X : set ℝ ) : X ⊆ closure(X) :=
+lemma subset_closure (X : set ℝ ) : X ⊆ closure(X) :=
 begin
   intros x h₁ ε h₂,
   apply exists.intro x,
   apply exists.intro h₁,
   rw [sub_self, abs_zero],
-  apply le_of_lt,
   exact h₂,
 end
 
 -- Trying to achieve the same thing using a term-based proof.
-lemma closure_eq_of_is_closed' (X : set ℝ ) : X ⊆ closure(X) :=
+lemma subset_closure_term (X : set ℝ ) : X ⊆ closure(X) :=
 assume x,
 assume h₁ : x ∈ X,
 have adh: x is_adherent_to X, from
@@ -215,126 +184,463 @@ have adh: x is_adherent_to X, from
   have h₃ : |x - x| < ε, from
     have h₄ : x - x = 0, from sub_self x,
     sorry, -- not sure how to proceed here.
-  have h₄ : |x - x| ≤ ε, from le_of_lt h₃,
-  exists.intro x (exists.intro h₁ h₄),
+  exists.intro x (exists.intro h₁ h₃),
 show x ∈ closure(X), from adh   
 
-
+-- 4. X ⊆ Y → closure(X) ⊆ closure(Y)
+lemma closure_mono {X Y :set ℝ} (hXY : X ⊆ Y) : closure(X) ⊆ closure(Y) :=
+begin
+  intros x hx ε hε,
+  have : ∃x' ∈ X, |x - x'| < ε, from hx ε hε,
+  rcases this with ⟨x', hx', h₂⟩,
+  use x',
+  split,
+  exact hXY hx',
+  exact h₂, -- could use `assumption` here instead.
+end
 
 -- 2. closure(X ∪ Y) = closure(X) ∪ closure(Y)       
-
-
 lemma closure_union 
-  (X Y : set ℝ) : 
+  {X Y : set ℝ} : 
 closure (X ∪ Y) = closure (X) ∪ closure (Y) :=
-sorry
+begin
+  apply set.subset.antisymm,
+  {
+    -- not sure how to do this part in Lean.
+    admit
+  },
+  {
+    intros a haXY,
+    cases haXY,
+    apply closure_mono (set.subset_union_left X Y) haXY,
+    apply closure_mono (set.subset_union_right X Y) haXY
+  }
+end
 
+/- 3. closure(X ∩ Y) ⊆ closure(X) ∩ closure(Y)
 
+Version 1, my original ε attempt. 
+Below, using closure_mono, is a nicer proof.
+-/
+lemma closure_inter_subset_inter_closure (X Y : set ℝ) :
+closure (X ∩ Y) ⊆ closure X ∩ closure Y :=
+begin
+  intros a ha,
+  split,
+  repeat {
+    intros ε hε,
+    rcases ha ε hε with ⟨xy, hxy, h₁⟩,
+    use xy,
+    cases hxy with l r,
+    split; assumption
+  }
+end
+ 
+/- 3. closure(X ∩ Y) ⊆ closure(X) ∩ closure(Y)
 
+Version 2, by Kenny Lau.
+https://leanprover.zulipchat.com/#narrow/stream/113489-new-members/topic/cleaning.20up.20this.20tactic.20proof.20%28regarding.20closures%29/near/192625784
+-/
+lemma closure_inter_subset_inter_closure' (X Y : set ℝ) :
+closure (X ∩ Y) ⊆ closure X ∩ closure Y :=
+have h₁ : closure (X ∩ Y) ⊆ closure X,
+  from closure_mono (set.inter_subset_left X Y),
+have h₂ : closure (X ∩ Y) ⊆ closure Y, 
+  from closure_mono (set.inter_subset_right X Y),
+set.subset_inter h₁ h₂
+  
 
+-- [TODO: convert to lean]
+-- Exercise 9.1.3
+-- This needs to be improved! How to properly prove being equal to the
+-- empty set?
+lemma is_empty_closed : is_closed ∅ :=
+begin
+unfold is_closed,
+unfold closure,
+apply set.subset.antisymm,
+{
+  intros x hx,
+  have h₁ : ∀ ε > 0, ∃x' ∈ ∅, |x - x'| < ε, from hx,
+  set a : ℝ := 1 with h₂,
+  have h₃ : a > 0, by linarith,
+  rcases h₁ a h₃ with ⟨x', h0, h0a⟩,
+  exact h0
+},
+{simp,}
+end
+-- Exercise 9.1.4
+-- Exercise 9.1.5
 
 /-
-set.eq_of_subset_of_subset
-  (assume x : ℝ, assume h₁ : x ∈ closure (X ∪ Y),
-    --have h₂ : x is_adherent_to (X ∪ Y), from h₁, 
-    --have h₃ : ∀ ε > 0, ∃i, ∃ h :i ∈ (X ∪ Y), |x - i| < ε, from h₂,
-    --have h₄ : ∀ ε > 0, ∃i, ∃ h :(i ∈ X ∨ i ∈ Y), |x - i| < ε, from h₂,
-    begin
-      simp,
-      by_cases h₁,
-    end
-  )
-  /-
-  show x ∈ (closure(X) ∪ closure(Y)), from 
-    have h₂ : x is_adherent_to (X ∪ Y), from h₁,
-    have h₂ : (x is_adherent_to X) ∨ (x is_adherent_to Y), from sorry,
-    or.elim h₂ 
-      (assume a₁ : x is_adherent_to X, 
-        show x ∈ (closure(X) ∪ closure(Y)), from
-        have h₃ : x ∈ closure(X), from a₁,
-        or.inl h₃)
-      (assume a₁ : x is_adherent_to Y, 
-        show x ∈ (closure(X) ∪ closure(Y)), from
-        have h₃ : x ∈ closure(Y), from a₁, 
-        or.inr h₃))
-    -/
-      
-  (assume x, assume h₁ : x ∈ (closure(X) ∪ closure(Y)),
-  show x ∈ closure(X ∪ Y), from sorry)
+Exercise 9.1.6
 -/
--- 3. closure(X ∩ Y) ⊆ closure(X) ∩ closure(Y)
-lemma closure_inter_subset_inter_closure(X Y : set ℝ) : 
-    closure(X ∩ Y) ⊆ closure(X) ∩ closure(Y) :=
+lemma closure_closure (X : set ℝ) : closure (closure X) = closure X :=
+begin
+apply set.subset.antisymm,
+{
+  intros a haX ε hε,
+  set δ := ε/3 with h3δ,
+  have hδ : δ > 0, by linarith,
+  rcases haX δ hδ with ⟨xc, hxc, h₁⟩,
+  rcases hxc δ hδ with ⟨x, hx, h₂⟩,
+  use x,
+  split,
+  exact hx,
+  calc |a - x| = |(a - xc) + (xc - x)| : by ring
+  ...          ≤ |a - xc| + |xc - x|   : by apply abs_add 
+  ...          < 2 * δ                 : by linarith
+  ...          < ε                     : by linarith
+},
+{
+  apply subset_closure (closure X)
+}
+end
+
+/- Exercise 9.1.6 (version 2)
+
+If you decide to follow the book and prove exercise 9.1.1 first, then you can
+use that result to prove 9.1.6 easily. Above, 9.1.6 is done without 9.1.1
+so as to be available for earlier proofs.
+-/
+example {X : set ℝ} : closure (closure X) = closure X :=
+begin
+  -- Use closure(X) as the middle term in 9.1.1's lemma.
+  let Y := closure X,
+  have h₁ : X ⊆ Y, from subset_closure X,
+  have h₂ : Y ⊆ closure X, from set.subset.refl Y,
+  have h₃ : closure X = closure (closure X), from closure_squeeze X Y h₁ h₂,
+  apply eq.symm, -- Should `simp,` work here instead?
+  exact h₃,
+end
+
+
+/- Exercise 9.1.7
+A the union of a finite number of closed sets is closed.
+
+It seems possible to either:
+  a) take a function, f: ℕ → set ℝ, as input and induce on ℕ, or
+  b) take a finset ℝ as input and induce using the provided mechanism of finset.
+
+Let's try a)
+
+The captial 'U' refers to the union of the family of sets.
+Note: should the `n` be removed?
+mathlib uses 'is_closed_bUnion' to name their method. I'm not sure what
+the b prefix means here.
+-/
+/-lemma is_closed_Union 
+  {ss : finset set ℝ} 
+  (h₁ : ∀s ∈ ss, is_closed (s)) :
+is_closed (set.Union (finset.to_set ss)) :=
+sorry
+-/
+/- TODO
+Struggling to induce over finite sets, so I'll try a more general approach of
+using index sets and come back later to address it. We can define f to be 
+a function that simply maps all i>n to n to achieve the same thing as intented,
+it's just not really honoring the intent of the original statement.
+-/
+lemma is_closed_Union_n 
+  {n : ℕ} 
+  {f : ℕ → set ℝ}
+  (h₁ : ∀i < n, is_closed (f i)) : 
+is_closed ⋃ i < n, f i :=
 sorry
 
--- 4. X ⊆ Y → closure(X) ⊆ closure(Y)
-lemma closure_mono (X Y :set ℝ) : X ⊆ Y → closure(X) ⊆ closure(Y) :=
+lemma not_le_of_ge (a b : ℝ) (h : ¬ a < b) : a ≥ b :=
+begin
+  -- ge_iff_le isn't actually needed.
+  rw [@not_lt ℝ real.linear_order a b, ←ge_iff_le] at h, 
+  exact h
+end
+--@iff.mp (¬a < b) (b ≤ a) (@not_lt ℝ real.linear_order a b) h
+
+variables P  : ℝ → Prop
+example (a : ℝ) (h : ∀ y : ℝ, P y → ¬ a < y) : ∀ y : ℝ, P y → a ≥ y :=
+begin
+  simp_rw @not_lt ℝ real.linear_order a at h,
+  exact h
+end
+
+/-- Exercise 9.1.9
+I took two approaches to solving this. 
+1. Tao's order
+I approached it in the sequence presented in the problem (starting with adherent 
+points being limit points xor isolated points). The first part of this turned 
+into a monolithic tactic proof. 
+
+2. First introduce to iff statements
+In an attempt to make the above proof less of a monolith, I proved the 
+bijections:
+  is_limit_point x X ↔ x ∈ closure (X \ {x}) 
+  is_isolated_point x X ↔ is_adherent x X ∧ x ∉ closure (X \ {x})
+However, the second of these proofs turned out to be even more involved than the
+original monolith, so nothing was really gained here. 
+-/
+
+-- 1. Tao's order.
+
+/- 1.1
+An adherent point to set of reals is exactly one of the following: 
+  * a limit point or
+  * an isolated point
+-/
+lemma limit_xor_isolated
+  (X : set ℝ) 
+  (x : ℝ)
+  (hx : is_adherent x X) :
+is_isolated_point x X ↔ ¬ is_limit_point x X :=
+begin
+  split,
+  {
+    intros hix hlx,
+    rcases hix with ⟨hxX, ε, hε, hy⟩,
+    rcases hlx ε hε with ⟨y, hyX, hxy⟩,
+    have h₁ := hy y hyX,
+    linarith,
+  },
+  {
+    intros nhlx,
+    -- unfold so that simp will be able to work.
+    unfold is_limit_point is_adherent at nhlx,
+    -- Push the negative all the way to the < relation.
+    simp_rw [not_forall, not_exists, @not_lt ℝ real.linear_order] at nhlx,
+    -- Writing it out here will nicer variables.
+    have h₁ : ∃ (ε : ℝ) (hε : ε > 0), ∀ (y : ℝ), y ∈ X \ {x} → |x - y| ≥ ε, from nhlx,
+    -- Q: Is there an easy way to replace all ≥ with > knowing that we can find 
+    -- a smaller real?
+    -- I just want to replace ≥ with >. It look simple, but it takes me...
+    have h₂ : ∃ (ε : ℝ) (hε : ε > 0), ∀ (y : ℝ), y ∈ X \ {x} → |x - y| > ε, 
+      rcases h₁ with ⟨ε, hε, hy⟩,
+      use ε/2,
+      split, 
+      {
+        exact (by linarith),
+      },
+      {
+        intros y hyX,
+        have h:= hy y hyX,
+        linarith,
+      },
+    -- ... 8 lines.
+    split,
+    { 
+      rcases h₁ with ⟨ε, hε, hy⟩,
+      rcases hx ε hε with ⟨y, hyX, hxy⟩,
+      by_contradiction,
+      rw ←(set.diff_singleton_eq_self a) at hyX,
+      have nhxy := hy y hyX,
+      linarith,
+    },
+    {
+      exact h₂
+    }
+  }
+end
+
+-- 1.2 a limit point is an adherent point.
+lemma adherent_of_limit 
+  {X : set ℝ}
+  {x : ℝ}
+  (h : is_limit_point x X) :
+is_adherent x X :=
+begin 
+  set X_diff_x := X \ {x},
+  have h₁ : is_adherent x X_diff_x, from h,
+  have h₂ : X_diff_x ⊆ X, from set.diff_subset X {x},
+  exact closure_mono h₂ h₁,
+end
+
+-- 1.3 a isolated point is an adherent point.
+lemma adherent_of_isolated
+  {X : set ℝ}
+  {x : ℝ}
+  (h : is_isolated_point x X) :
+is_adherent x X :=
+begin
+  intros ε hε,
+  use x,
+  rw [sub_self, abs_zero],
+  exact ⟨h.left, hε⟩,
+end
+
+-- 2. Custom order.
+lemma limit_iff_mem_closure_minus
+  {X : set ℝ}
+  {x : ℝ} : 
+is_limit_point x X ↔ x ∈ closure (X \ {x}) :=
+begin
+unfold is_limit_point closure,
+simp
+end
+
+lemma isolated_iff_adherent_not_mem_closure_minus
+  {X : set ℝ}
+  {x : ℝ} :
+is_isolated_point x X ↔ is_adherent x X ∧ x ∉ closure (X \ {x}) :=
+begin
+split,
+{
+  intro h,
+  split,
+  {
+    intros ε hε,
+    use x,
+    rw [sub_self, abs_zero],
+    exact ⟨h.left,hε⟩,
+  },
+  { 
+    -- I wanted to push the negative to the left and produce:
+    --    ∃ ε > 0, ¬∃ y ∈ X\{x}, |x - y| ≤ ε 
+    --    ∃ ε/2 > 0, ¬∃ y ∈ X\{x}, |x - y| < ε/2 
+    --    ¬ ∀ ε/2 > 0, ∃ y ∈ X\{x}, |x - y| < ε/2 
+    -- which is our goal.
+    -- But, as seen below, it's tedius, so I'll just bounce between the ∃ and ∀.
+    intros hn,
+    rcases h.right with ⟨ε, hε, h₁⟩,
+    simp at hn h₁,
+    rcases hn ε hε with ⟨y, hy, hxy⟩,
+    simp at hy,
+    have h := h₁ y hy.left hy.right,
+    linarith,
+  }
+},
+{
+  assume h,
+  have h₁ : x ∈ closure X, from h.left,
+  split,
+  {
+    by_contradiction,
+    have h₂ : X = X \ {x}, from eq.symm (set.diff_singleton_eq_self a),
+    rw h₂ at h₁,
+    exact h.right h₁,
+  },
+  {
+    have hr := h.right,
+    unfold closure is_adherent at hr,
+    rw set.mem_set_of_eq at hr,
+    -- Push the negative all the way to the < relation.
+    simp_rw [not_forall, not_exists, @not_lt ℝ real.linear_order, 
+             iff.symm ge_iff_le] at hr,
+    -- I just want to replace ≥ with >. It look simple, but it takes me...
+    have ans : ∃ (ε : ℝ) (hε : ε > 0), ∀ (y : ℝ), y ∈ X \ {x} → |x - y| > ε, 
+      rcases hr with ⟨ε, hε, hy⟩,
+      use ε/2,
+      split, 
+      exact (by linarith),
+      intros y hyX,
+      have h:= hy y hyX,
+      linarith,
+    -- ... 8 lines.-/
+    exact ans
+  }
+}
+end
+
+lemma limit_xor_isolated'
+  (X : set ℝ) 
+  (x : ℝ)
+  (hx : is_adherent x X) :
+is_isolated_point x X ↔ ¬ is_limit_point x X :=
+begin
+  split,
+  {
+    intros hix hlx,
+    exact (iff.elim_left isolated_iff_adherent_not_mem_closure_minus hix).right hlx,
+  },
+  {
+    intros nhlx,
+    rw limit_iff_mem_closure_minus at nhlx,
+    have h₁ := and.intro hx nhlx,
+    exact (iff.elim_right isolated_iff_adherent_not_mem_closure_minus h₁)
+  }
+end
+
+
+
+
+
+    /-
+    intros hlx,
+    --have h₁ := not_forall hlx,
+    have h₁ := iff.elim_left not_forall hlx,
+    -- Why can't I apply rw not_imp here? simp goes too far.
+    -- rw not_imp, 
+    cases h₁ with ε h₂,
+    have h₃ := iff.elim_left not_imp h₂,
+    cases h₃,
+    rw not_exists at h₃_right,
+    -- Why can't I write: rw ←not_le at h₃_right,
+    split,
+    {
+      rcases hx ε h₃_left with ⟨y, hy, hxy⟩,
+      have h₄ := h₃_right y,
+      rw not_exists at h₄,
+      by_contradiction,
+      have h₅ := and.intro hy a,
+      rw [set.sub_eq_diff, set.mem_diff] at h₄,
+      have h₆ : y ≠ x, 
+        by_contradiction,
+        simp at a_1,
+        have h₇ := h₄ ⟨h₅.left, _⟩,
+      simp at h₄,
+    },
+    {
+      set δ := ε/2 with h3δ,
+      have hδ : δ > 0, by linarith,
+      use δ,
+      split,
+      exact hδ,
+      intros y hy,
+      have h₄ := h₃_right y,
+      rw not_exists at h₄,
+      have h₅ := h₄ hy,
+      linarith,
+      }
+
+    --rcases hx ε h₃.left with ⟨y, hy, hxy⟩,
+  }
+end-/
+ /-have h₁ : ¬(is_isolated_point x X ∧ is_limit_point x X),
+    intro h₂,
+    rcases h₂.left with ⟨hxX, ε, hε, hy⟩,
+    have h₃ := h₂.right ε hε, 
+    rcases h₃ with ⟨y, hyX, hxy⟩,
+    have h₄ := hy y hyX, 
+  linarith,-/
+
+  /-{
+    intros hix hlx,
+    rcases hix with ⟨hxX, ε, hε, hy⟩,
+    rcases hlx ε hε with ⟨y, hyX, hxy⟩,
+    have h₁ := hy y hyX,
+    linarith,
+  },
+  {
+    intros hlx hix,
+  }
+end-/
+
+lemma limit_point_is_adherent 
+  (X : set ℝ) 
+  (x : ℝ) 
+  (h₁ : is_limit_point x X): 
+is_adherent x X :=
 sorry
 
-/-
-lemma adheres_to_superset (i : ℝ) (A : set ℝ) (B : set ℝ) (h2: B ⊆ A):
-    is_adherent i B → is_adherent i A  :=
-    assume a1 : is_adherent i B,
-    show is_adherent i A, from
-      assume ε,
-      assume a2 : ε > 0,
-        exists.elim (a1 ε a2) 
-          (assume (y : B) (h3: |i - y| < ε),
-          show ∃z ∈ A, |i - z| < ε, from sorry)
-            --exists.intro y h3)
+lemma isolated_point_is_adherent 
+  (X : set ℝ) 
+  (x : ℝ) 
+  (h₁ : is_isolated_point x X): 
+is_adherent x X :=
+sorry
+
+
+/-- Exercise 9.1.10
 -/
+lemma closure_bounded_if_bounded :
+  (X :)
 
 
 end tao_analysis
-
-namespace graveyard
-
-lemma closure_squeeze_term(X Y : set ℝ) (h₁ : X ⊆ Y) (h₂ : Y ⊆ closure(X)) 
-    : closure(X) = closure(Y) :=
-    -- Can either use set.eq_of_subset_of_subset or set.ext. The difference
-    -- being whether we are showing that two sets are subsets of each other or
-    -- whether we are showing that an object is an element of set X iff it is an
-    -- element of Y. Both are equivalent, but we need to choose which to use.
-    set.eq_of_subset_of_subset
-      (assume x, assume h₃ : x ∈ closure(X),
-        show x ∈ closure(Y), from 
-        begin 
-          intro ε,
-          intro h₄,
-          have h₅ : ∃ x' ∈ X, |x - x'| ≤ ε, from h₃ ε h₄,
-          show ∃ y ∈ Y, |x - y| ≤ ε, from exists.elim h₅ (
-            assume (x' : ℝ) (h: (∃hh₁ : (x' ∈ X), |x - x'| ≤ ε)),
-            exists.elim h (
-              assume (hhh₁ : x' ∈ X) (hhh₂ : |x - x'| ≤ ε),
-              have hhh₃ : x' ∈ Y, from h₁ hhh₁,
-              show ∃y ∈ Y, |x - y| ≤ ε, from 
-                exists.intro x' (exists.intro hhh₃ hhh₂))),
-        end)
-      (assume y, assume h₃ : y ∈ closure(Y),
-        show y ∈ closure(X), from 
-          assume ε,
-          assume h₄,
-          have h₅ : ∃δ : ℝ, δ = ε/3, from exists_eq,
-          have h₆ : ∃x ∈ X, |y - x| ≤ ε, from exists.elim h₅ 
-            (assume (δ : ℝ) (hh₁ : δ = ε/3),
-            have hh₃ : δ > 0, by linarith,
-            have hh₂ : ∃ y' ∈ Y, |y - y'| ≤ δ, from h₃ δ hh₃,
-            exists.elim hh₂
-              (assume (y' : ℝ) (hh₄ : ∃ hhh₁ : y' ∈ Y, | y - y'| ≤ δ),
-              exists.elim hh₄ 
-                (assume (h4₁ : y' ∈ Y) (h4₂ : |y - y'| ≤ δ),
-                have h4₃ : y' ∈ closure(X), from h₂ h4₁,
-                have h4₄ : ∃x ∈ X, |y' - x| ≤ δ, from h4₃ δ hh₃,
-                exists.elim h4₄
-                  (assume (x : ℝ) (h4₅ : ∃ h5₁ : x ∈ X, |y' - x| ≤ δ),
-                  exists.elim h4₅
-                    (assume (h5₁ : x ∈ X) (h5₂ : |y' - x| ≤ δ),
-                    --norm_add_le_of_le (by apply_instance) h4₂ h5₂
-                    have h5₇ : |y - x| ≤ 2*δ, from sorry,
-                    have h5₈ : |y - x| ≤ ε, by linarith,
-                    have h5₉ : ∃x' ∈ X, |y - x'| ≤ ε, from 
-                       exists.intro x (exists.intro h5₁ h5₈),
-                    h5₉))))),
-          h₆)
-
-end graveyard

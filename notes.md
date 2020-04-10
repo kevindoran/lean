@@ -99,9 +99,22 @@ https://github.com/leanprover/lean/blob/master/library/init/data/set.lean
 Mathlib
 https://leanprover-community.github.io/mathlib_docs/data/set/basic.html#set.ext
 
+Definitions/theorems
+~~~~~~~~~~~~~~~~~~~~
+
+set.mem_set_of_eq   
+Converts set notation `x \in {i : \R | P i}` to `P x`.
+
+
+Links
+=====
 Kevin Buzzard links:
 https://github.com/ImperialCollegeLondon/M40001_lean
 https://github.com/ImperialCollegeLondon/group-theory-game
+
+Understanding tactics
+https://dl.acm.org/doi/10.1145/3110278
+
 
 
 Proof tricks

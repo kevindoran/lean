@@ -39,7 +39,9 @@ Contents and exercises for Chapter 9 of Tao's Analysis.
 import data.real.basic
 import data.set
 import logic.basic
---import finset
+
+import tao_ch5
+
 set_option pp.implicit true
 -- Make simp display the steps used.  
 set_option trace.simplify.rewrite true
@@ -248,7 +250,34 @@ have h₁ : closure (X ∩ Y) ⊆ closure X,
 have h₂ : closure (X ∩ Y) ⊆ closure Y, 
   from closure_mono (set.inter_subset_right X Y),
 set.subset_inter h₁ h₂
-  
+
+-- Lemma 9.1.12
+-- There are 4 parts.
+
+-- 1. Closure of interval (a, b) is [a, b].
+lemma closure_Ioo_Icc 
+  (a b : ℝ) 
+  (hab : a < b) :
+closure (set.Ioo a b) = (set.Icc a b) :=
+begin
+apply set.subset.antisymm,
+{
+  intros x hx,
+  by_contradiction H,
+  unfold set.Icc at H,
+  simp at H,
+  admit,
+},
+{
+  admit
+},
+end
+
+-- 2. Closure of interval (a, b] is [a, b].
+-- 3. Closure of interval [a, b) is [a, b].
+-- 4. Closure of interval [a, b] is [a, b].
+
+
 
 -- [TODO: convert to lean]
 -- Exercise 9.1.3
@@ -558,7 +587,91 @@ begin
 end
 
 
+-- Exercise 9.1.10
+-- This is an trivial proof on paper, but I ended up with a mess in Lean.
+example (X : set ℝ) (h : X.nonempty) : 
+is_bounded X ↔ has_finite_sup X ∧ has_finite_inf X :=
+begin
+  split,
+  {
+    -- The forward proof isn't too bad—it's the reverse that is the main issue.
+    intro hb,
+    rcases hb with ⟨u, hu, h₁⟩,
+    let l := -u,
+    have hub : u ∈ upper_bounds X, 
+      intros x hx,
+      exact (h₁ hx).right,
+    have hlb : l ∈ lower_bounds X, 
+      intros x hx,
+      exact (h₁ hx).left,
+    have hfs : has_finite_sup X, from ⟨h, set.nonempty_of_mem hub⟩,
+    have hfi : has_finite_inf X, from ⟨h, set.nonempty_of_mem hlb⟩,
+    exact ⟨hfs, hfi⟩,
+  },
+  {
+    -- This part is a mess, mainly becase:
+    --   1. I don't find a simple way of going from `u l : ℝ` to `∃ m > 0, m ≥ u ∧ m ≥ l`
+    --   2. I don't know of a tactic like `linarith` that will work with abs inequalities.
+    intro h,
+    rcases h.left.right with ⟨u, hu⟩,
+    rcases h.right.right with ⟨l, hl⟩,
+    -- Try create m by setting it equal to `|upper bound| + |lower bound| + 1` 
+    let m0 := |u| + |l|,
+    have h₁ : m0 ≥ |u| ∧ m0 ≥ |l|, 
+      split; {norm_num, apply abs_nonneg},
+    let m1 : ℝ := m0 + 1,
+    have h₂ : m0 ≤ m1, by norm_num,
+    have h₄ : m1 ≥ |u| ∧ m1 ≥ |l|, 
+      -- Short but opaque alternative for h₄ proof:
+      --   split; cases h₁; apply le_trans; assumption,
+      split, 
+      {
+        apply le_trans h₁.left h₂,
+      },
+      {
+        apply le_trans h₁.right h₂,
+      },
+    use m1,
+    split,
+    {
+    -- Can't find any automation for here.
+      have m0_nonneg : 0 ≤ m0, from add_nonneg (abs_nonneg u) (abs_nonneg l),
+      have h₃ : 0 < m1, from add_pos_of_nonneg_of_pos m0_nonneg (by norm_num), 
+      exact h₃,
+    },
+    {
+      intros x hx,
+      -- Can't find any automation for here.
+      have hxm : x ≤ m1, from le_trans (hu hx) (le_trans (le_abs_self u) h₄.left), 
+      have hml : -l ≤ m1, from le_trans (neg_le_abs_self l) h₄.right,
+      rw neg_le at hml,
+      have hmx := le_trans hml (hl hx),
+      exact ⟨hmx, hxm⟩,
+    },
+  },
+end
 
+
+example (X : set ℝ) (h : X.nonempty) :
+is_bounded X ↔ has_finite_sup X ∧ has_finite_inf X :=
+begin
+  split,
+  { rintro ⟨M, M0, hM⟩,
+    exact ⟨⟨h, M, λ x h, (hM h).2⟩, ⟨h, -M, λ x h, (hM h).1⟩⟩ },
+  { rintro ⟨⟨_, u, hu⟩, ⟨_, v, hv⟩⟩,
+    use max 1 (max u (-v)), split,
+    { apply lt_of_lt_of_le zero_lt_one,
+      apply le_max_left },
+    { intros x hx, split,
+      { apply neg_le.1,
+        apply le_trans _ (le_max_right _ _),
+        apply le_trans _ (le_max_right _ _),
+        apply neg_le_neg,
+        exact hv hx },
+      { apply le_trans _ (le_max_right _ _),
+        apply le_trans _ (le_max_left _ _),
+        exact hu hx } } }
+end
 
 
     /-

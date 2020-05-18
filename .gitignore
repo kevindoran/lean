@@ -1,2 +1,3 @@
 venv
 **/**.swp
+lean_root/src/private

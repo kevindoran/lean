@@ -266,7 +266,23 @@ apply set.subset.antisymm,
   by_contradiction H,
   unfold set.Icc at H,
   simp at H,
-  admit,
+  have hxa : x < a ∨ a ≤ x, by exact @lt_or_ge ℝ real.linear_order x a,
+  cases hxa with hlt hge,
+  {
+    have h₁ : ∃ β > 0, x + β = a, from sorry,
+    --have h₆ : x = a - β, by linarith,--exact @eq_sub_of_add_eq ℝ real.add_group x a β h₂,
+    rcases h₁ with ⟨β, hβ, h₂⟩,
+    rcases hx β hβ with ⟨y, hy, hxy⟩,
+    have h₃ : a < y, from hy.left,
+    have h₄ : ∃ α > 0, a + α = y, from sorry,
+    rcases h₄ with ⟨α, hα, h₅⟩,
+    have h₆ : a = y - α, by linarith,
+    rw h₆ at h₂,
+    have h₇ := y - x = β + α, from sorry,--by linarith, -- really linarith!
+  },
+  {
+    admit
+  },
 },
 {
   admit

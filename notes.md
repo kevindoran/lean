@@ -105,6 +105,12 @@ Definitions/theorems
 set.mem_set_of_eq   
 Converts set notation `x \in {i : \R | P i}` to `P x`.
 
+Algebra
+-------
+le_sub (from algebra/ordered_group)
+a < b -> \exists c > 0, a + c = b 
+
+
 
 Links
 =====
@@ -115,6 +121,9 @@ https://github.com/ImperialCollegeLondon/group-theory-game
 Understanding tactics
 https://dl.acm.org/doi/10.1145/3110278
 
+Other peoples progress:
+https://github.com/jsm28/bmo2-2020-lean/
+
 
 
 Proof tricks
@@ -123,3 +132,8 @@ use
 -- Assign an expression to see it's type in the live panel.
 let h1 := <some expression>,
 have h1 := <some expression>,
+
+dsimp
+unfold definitions? 
+
+
